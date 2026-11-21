@@ -2,10 +2,12 @@ hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 
 hl.on("hyprland.start", function()
-	-- Polkit agent (password prompts for system actions): hyprpolkitagent or
-	-- polkit-gnome, where distributions put them (NixOS, Arch, Debian/Ubuntu,
+	-- Polkit agent (password prompts for system actions): kirin's NixOS
+	-- module's (/etc/kirin/polkit-agent), else hyprpolkitagent or
+	-- polkit-gnome where distributions put them (Arch, Debian/Ubuntu,
 	-- Fedora, openSUSE).
 	hl.exec_cmd([[sh -c 'for a in \
+		/etc/kirin/polkit-agent \
 		/run/current-system/sw/libexec/polkit-gnome-authentication-agent-1 \
 		/usr/lib/hyprpolkitagent/hyprpolkitagent \
 		/usr/libexec/hyprpolkitagent \

@@ -83,6 +83,12 @@ in
       portalPackage = upstream.xdg-desktop-portal-hyprland;
     };
 
+    # The polkit agent (password prompts for system actions: auto update's
+    # switch, mounting…), started by Hyprland (config/hypr/modules/
+    # autostart.lua). Packages' libexec isn't linked into the system's
+    # profile, so here at a fixed path.
+    environment.etc."kirin/polkit-agent".source = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
+
     # The titlebar plugin (config/hypr/hyprland.lua loads it).
     environment.etc."kirin/plugins.lua".text = ''
       hl.plugin.load("${kirinBars}/lib/kirin-bars.so")
