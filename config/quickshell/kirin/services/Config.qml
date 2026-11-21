@@ -42,16 +42,41 @@ Singleton {
         return easings[name] ?? Easing.InOutCubic;
     }
 
+    // Back to the factory settings (Settings → About): the file is removed
+    // and the shell starts afresh, so every setting is its default again
+    // and the file is written anew with those. Meanwhile nothing is written
+    // back (removed, the file would be made again from what's in memory).
+    property bool resetting: false
+
+    function resetToDefaults(): void {
+        resetting = true;
+        saveTimer.stop();
+        remover.running = true;
+    }
+
+    Process {
+        id: remover
+
+        command: ["rm", "-f", root.path]
+        onExited: Quickshell.reload(true)
+    }
+
     FileView {
         id: file
 
         path: root.path
         watchChanges: true
         printErrors: false
-        onFileChanged: reload()
+        onFileChanged: {
+            if (!root.resetting)
+                reload();
+        }
 
         // Batch rapid changes (dragging a slider) into one write.
-        onAdapterUpdated: saveTimer.restart()
+        onAdapterUpdated: {
+            if (!root.resetting)
+                saveTimer.restart();
+        }
 
         onLoaded: {
             // Once per run, write the file back so settings added in newer
@@ -287,7 +312,10 @@ Singleton {
         id: saveTimer
 
         interval: 300
-        onTriggered: file.writeAdapter()
+        onTriggered: {
+            if (!root.resetting)
+                file.writeAdapter();
+        }
     }
 
     Process {

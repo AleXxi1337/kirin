@@ -108,7 +108,8 @@ Scope {
         }
 
         function page(index: int): void {
-            root.currentPage = index;
+            if (index >= 0 && index < root.pages.length)
+                root.currentPage = index;
         }
     }
 
