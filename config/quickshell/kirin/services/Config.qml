@@ -150,7 +150,7 @@ Singleton {
             property JsonObject bar: JsonObject {
                 // Bottom modules, top to bottom, by id (see BarModules); ones
                 // missing here are added at the end.
-                property var modules: ["notifications", "tray", "media", "brightness", "volume", "wifi", "bluetooth", "battery", "keyboard", "clock"]
+                property var modules: ["media", "tray", "keyboard", "brightness", "volume", "wifi", "bluetooth", "battery", "clock", "notifications"]
                 // Modules turned off, by id.
                 property var hiddenModules: []
                 // Brightness, sound, network and Bluetooth together behind a
@@ -164,7 +164,7 @@ Singleton {
                 // card behind "⋯". 0: all in the bar.
                 property int trayVisible: 2
                 // Gap between the bottom modules, in px (Settings → Bar).
-                property int moduleSpacing: 10
+                property int moduleSpacing: 6
                 // Tray apps not shown, by their id (StatusNotifierItem id,
                 // usually the app's name).
                 property var trayHidden: ["udiskie"]
@@ -174,7 +174,7 @@ Singleton {
 
             property JsonObject sounds: JsonObject {
                 // Sound theme: folder name in share/sounds (Settings → Sounds).
-                property string theme: "freedesktop"
+                property string theme: "Yaru"
                 // 0–1, for all of kirin's sounds.
                 property real volume: 0.6
                 // All of them off, the volume kept (the mixer's mute).

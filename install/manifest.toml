@@ -79,3 +79,8 @@ mode = "files"
 [folders]
 # In the home directory: the wallpaper picker's and the screenshots'.
 home = ["Pictures/Wallpapers", "Pictures/Screenshots"]
+
+[wallpaper]
+# Set when none is chosen yet (copied into ~/Pictures/Wallpapers, so the
+# picker has it too). The colours follow it.
+default = "assets/wallpapers/wallhaven-6l27v6.jpg"

@@ -14,8 +14,21 @@ A new system from the template:
 ```sh
 nix flake init -t github:AleXxi1337/kirin
 nixos-generate-config --show-hardware-config > hardware-configuration.nix
+nix flake lock   # first: made during the install, it fails its hash check
 sudo nixos-rebuild switch --flake .#kirin   # or nixos-install --flake .#kirin
 ```
+
+From the NixOS installer, on a disk mounted at `/mnt`:
+
+```sh
+mkdir -p /mnt/etc/nixos && cd /mnt/etc/nixos
+nix --extra-experimental-features 'nix-command flakes' flake init -t github:AleXxi1337/kirin
+nixos-generate-config --root /mnt --show-hardware-config > hardware-configuration.nix
+nix --extra-experimental-features 'nix-command flakes' flake lock
+nixos-install --flake /mnt/etc/nixos#kirin
+```
+
+The user is `user` with the password `kirin` (change it with `passwd`).
 
 On an existing one, add the module to your flake:
 

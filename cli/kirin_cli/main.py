@@ -8,7 +8,7 @@ from kirin_cli.bin.app import App
 from kirin_cli.bin.types import Flag
 from kirin_cli.services.cache import CacheService
 from kirin_cli.services.scheme import SchemeService
-from kirin_cli.services.setup import Checkout, CheckoutError, Links, is_nixos, kirin_dir, make_folders, manifest
+from kirin_cli.services.setup import Checkout, CheckoutError, Links, is_nixos, kirin_dir, make_folders, manifest, set_default_wallpaper
 from kirin_cli.services.shell import ShellService
 from kirin_cli.services.wallpaper import WallpaperService
 
@@ -68,6 +68,10 @@ def init_command(session: bool) -> None:
         console.print({"present": f"Checkout in {directory}", "cloned": f"Cloned kirin into {directory}", "copied": f"Copied kirin into {directory} (offline; origin set to the repository)"}[how], soft_wrap=True)
 
     _link_home(quiet=session)
+
+    wallpaper = set_default_wallpaper(directory, manifest(directory))
+    if wallpaper:
+        console.print(f"Wallpaper: {wallpaper}", soft_wrap=True)
 
     scheme = SchemeService()
     if scheme.create_default():

@@ -62,7 +62,7 @@ class Checkout:
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
                 shutil.rmtree(self.directory, ignore_errors=True)
         if self.source and (self.source / "install" / "manifest.toml").is_file():
-            shutil.copytree(self.source, self.directory, symlinks=True)
+            shutil.copytree(self.source, self.directory, symlinks=True, ignore=shutil.ignore_patterns(".git"))
             # From the store: read-only.
             for root, dirs, files in os.walk(self.directory):
                 for name in dirs + files:
@@ -157,6 +157,27 @@ class Links:
 def make_folders(names: list[str], home: Path | None = None) -> None:
     for name in names:
         ((home or Path.home()) / name).mkdir(parents=True, exist_ok=True)
+
+
+def set_default_wallpaper(directory: Path, m: dict, home: Path | None = None) -> Path | None:
+    """The manifest's default wallpaper, when none is chosen yet: copied into
+    ~/Pictures/Wallpapers (so the picker has it) and set. The shell's colours
+    follow it. A chosen one is never replaced."""
+    rel = m.get("wallpaper", {}).get("default")
+    state = state_dir() / "wallpaper"
+    if not rel or (state.is_file() and state.read_text().strip()):
+        return None
+    src = directory / rel
+    if not src.is_file():
+        return None
+    folder = (home or Path.home()) / "Pictures" / "Wallpapers"
+    folder.mkdir(parents=True, exist_ok=True)
+    dest = folder / src.name
+    if not dest.exists():
+        shutil.copyfile(src, dest)
+    state.parent.mkdir(parents=True, exist_ok=True)
+    state.write_text(f"{dest}\n")
+    return dest
 
 
 def is_nixos() -> bool:
