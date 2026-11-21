@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Settings
+GenericName=Kirin Settings
+Comment=Appearance, display, bar, sounds, power and wallpaper of the kirin shell
+Icon=preferences-system
+Exec=qs -c kirin ipc call settings open
+Terminal=false
+Categories=Settings;DesktopSettings;
+Keywords=kirin;settings;preferences;config;options;
+StartupNotify=false

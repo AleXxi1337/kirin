@@ -1,0 +1,81 @@
+# What kirin needs on a system. Read by both ways of installing it:
+#   - the NixOS module (nix/module.nix, through builtins.fromTOML): the
+#     packages and fonts, by nixpkgs attribute;
+#   - `kirin init` (cli/): the links and folders in the home directory (on
+#     NixOS too, at each login), and on other distributions the packages
+#     (not yet: only NixOS is supported for now).
+# Services (Hyprland, PipeWire, NetworkManager, Bluetooth, UPower, power
+# profiles, polkit, greetd…) aren't listed here: each system turns them on
+# its own way (the NixOS module does).
+
+[packages]
+# nixpkgs attribute paths. Kirin's own packages (Quickshell with video,
+# the titlebar plugin, the CLI, sound and symbol themes) are the module's.
+nixos = [
+  # Colours, video wallpapers, images
+  "matugen",
+  "ffmpeg-headless",
+  "imagemagick",
+  # Brightness, screenshots, clipboard
+  "brightnessctl",
+  "grimblast",
+  "wl-clipboard",
+  "cliphist",
+  # Launcher search
+  "fd",
+  "fzf",
+  # Disks, permission prompts, opening files, notifications
+  "udiskie",
+  "polkit_gnome",
+  "xdg-utils",
+  "libnotify",
+  "glib",
+  "jq",
+  # The checkout in ~/.kirin
+  "git",
+  # Apps the keys open (hypr/modules/programs.lua)
+  "kitty",
+  "nautilus",
+  # Icons, cursor, sounds
+  "colloid-icon-theme",
+  "bibata-cursors",
+  "kdePackages.ocean-sound-theme",
+  "kdePackages.oxygen-sounds",
+]
+
+[fonts]
+nixos = [
+  "roboto",
+  "material-symbols",
+  "noto-fonts",
+  "noto-fonts-color-emoji",
+  "nerd-fonts.jetbrains-mono",
+]
+
+# Links from the checkout (~/.kirin) into the home directory.
+#   dir:   the folder itself is a link (nothing but kirin writes there);
+#   files: a link per file, the folders real (other programs write there
+#          too: ~/.config/hypr, ~/.local/share/applications).
+[[links]]
+source = "config/quickshell/kirin"
+target = ".config/quickshell/kirin"
+mode = "dir"
+
+[[links]]
+source = "config/hypr"
+target = ".config/hypr"
+mode = "files"
+
+[[links]]
+source = "share/applications"
+target = ".local/share/applications"
+mode = "files"
+
+[[links]]
+source = "share/kirin"
+target = ".local/share/kirin"
+mode = "files"
+
+[folders]
+# In the home directory: the wallpaper picker's and the screenshots'.
+home = ["Pictures/Wallpapers", "Pictures/Screenshots"]

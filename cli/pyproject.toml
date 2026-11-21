@@ -1,0 +1,19 @@
+[project]
+name = "kirin-cli"
+version = "0.1.0"
+description = "CLI Tool for kirin"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "rich>=13.0.0",
+]
+
+[project.scripts]
+kirin = "kirin_cli.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["kirin_cli"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
