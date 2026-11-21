@@ -74,6 +74,11 @@ Scope {
             source: "pages/LauncherPage.qml"
         },
         {
+            label: "Update",
+            icon: "system_update",
+            source: "pages/UpdatePage.qml"
+        },
+        {
             label: "About",
             icon: "info",
             source: "pages/AboutPage.qml"

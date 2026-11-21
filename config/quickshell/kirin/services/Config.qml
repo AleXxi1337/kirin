@@ -23,6 +23,7 @@ Singleton {
     property alias sounds: adapter.sounds
     property alias media: adapter.media
     property alias input: adapter.input
+    property alias update: adapter.update
 
     // True once the file has been read (or created), so consumers don't act on
     // defaults that are about to be replaced by the user's values.
@@ -246,6 +247,16 @@ Singleton {
                 // Shortcuts, services/Shortcuts.qml): { id: "MODS + key" },
                 // "" for off.
                 property var shortcuts: ({})
+            }
+
+            // Settings → Update (services/Updates.qml; on NixOS also read, as
+            // root, by kirin-update.service: nix/update.nix).
+            property JsonObject update: JsonObject {
+                // Commit flake.lock after updating (the system's flake in git).
+                property bool autoCommit: false
+                // Keep only the last `keep` systems after updating.
+                property bool cleanup: true
+                property int keep: 5
             }
 
             property JsonObject media: JsonObject {

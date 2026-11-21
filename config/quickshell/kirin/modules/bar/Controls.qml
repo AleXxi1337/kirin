@@ -188,6 +188,21 @@ Item {
                     CAnim {}
                 }
             }
+
+            // An update is there (Settings → Update).
+            Rectangle {
+                visible: Updates.available
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: -1
+                width: Math.max(6, Math.round(root.gearSize * 0.3))
+                height: width
+                radius: width / 2
+                color: Theme.m3primary
+                border.width: 1.5
+                border.color: Theme.m3surface
+                rotation: -parent.rotation
+            }
         }
     }
 }

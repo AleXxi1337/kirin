@@ -28,10 +28,14 @@ let
   manifest = builtins.fromTOML (builtins.readFile ../install/manifest.toml);
   attr = name: lib.getAttrFromPath (lib.splitString "." name) pkgs;
 
-  kirinBars = upstream.callPackage ./pkgs/kirin-bars.nix { src = "${self}/plugins/bars"; };
-  kirinVideo = pkgs.callPackage ./pkgs/kirin-video.nix { src = "${self}/plugins/video"; };
+  # Sources copied on their own (builtins.path), not as part of kirin's
+  # tree: rebuilt only when they change, not with every commit of kirin
+  # (a new titlebar plugin means logging out to load it).
+  own = name: path: builtins.path { inherit name path; };
+  kirinBars = upstream.callPackage ./pkgs/kirin-bars.nix { src = own "kirin-bars-src" ../plugins/bars; };
+  kirinVideo = pkgs.callPackage ./pkgs/kirin-video.nix { src = own "kirin-video-src" ../plugins/video; };
   quickshell = pkgs.callPackage ./pkgs/quickshell-multimedia.nix { extraQmlModules = [ kirinVideo ]; };
-  kirinCli = pkgs.callPackage ./pkgs/kirin-cli.nix { src = "${self}/cli"; };
+  kirinCli = pkgs.callPackage ./pkgs/kirin-cli.nix { src = own "kirin-cli-src" ../cli; };
 
   # The session greetd starts: the checkout and links first (Hyprland reads
   # its config as it starts), then Hyprland. A failed init doesn't keep the
@@ -48,6 +52,7 @@ in
   imports = [
     ./sleep.nix
     ./hibernation.nix
+    (import ./update.nix { inherit self; })
   ];
 
   options.kirin = {

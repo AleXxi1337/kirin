@@ -33,6 +33,8 @@ ShellRoot {
         StreamVolume.running;
         // Wi-Fi and Bluetooth back on or off as they were.
         Radios.running;
+        // Checks for updates once a day.
+        Updates.running;
     }
 
     Background {}
