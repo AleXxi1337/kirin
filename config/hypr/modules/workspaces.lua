@@ -147,3 +147,7 @@ hl.on("monitor.removed", soon)
 hl.on("monitor.layout_changed", soon)
 -- On start and every config reload (which drops the rules).
 soon()
+
+-- Super + the number of the workspace you're on goes back to the one before
+-- (Super+3, Super+1, Super+1 again: back on 3).
+hl.config({ binds = { workspace_back_and_forth = true } })
