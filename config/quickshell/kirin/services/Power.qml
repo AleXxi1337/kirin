@@ -259,7 +259,29 @@ Singleton {
                     kernelEnd: f[5] === "-" ? -1 : Number(f[5])
                 } : null;
                 limitSetter.check();
+                // Didn't take: the thresholds put right as root (NixOS:
+                // kirin-charge-limit.service, nix/battery.nix), once per
+                // mismatch; elsewhere there's no such service and it stays.
+                if (!root.limitMismatch)
+                    limitFixer.tried = false;
+                else if (!limitFixer.tried) {
+                    limitFixer.tried = true;
+                    limitFixer.running = true;
+                }
             }
+        }
+    }
+
+    Process {
+        id: limitFixer
+
+        property bool tried: false
+
+        command: ["systemctl", "start", "kirin-charge-limit.service"]
+        onExited: code => {
+            if (code === 0)
+                root.limitError = "";
+            root.readLimit();
         }
     }
 

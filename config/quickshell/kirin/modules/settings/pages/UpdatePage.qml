@@ -105,7 +105,7 @@ ColumnLayout {
 
     // What's new and the update.
     SettingsSection {
-        visible: root.u.available
+        visible: root.u.available || root.u.stages.length > 0
         title: "What's new"
 
         Repeater {
@@ -172,19 +172,130 @@ ColumnLayout {
             }
         }
 
-        // The system update's output.
+        // The update's progress: a bar, then each step with its output
+        // (opened by its arrow; a step that failed opens by itself).
         SettingsRow {
-            visible: root.u.updating && root.u.log !== ""
+            visible: root.u.stages.length > 0
             icon: "receipt_long"
-            title: "Progress"
-
-            StyledText {
-                Layout.fillWidth: true
-                text: root.u.log.trim().split("\n").slice(-12).join("\n")
-                font.family: "monospace"
-                font.pixelSize: Theme.size.labelMedium
+            title: root.u.updating ? "Updating…" : root.u.stages.some(st => st.state === "failed") ? "The update stopped" : "Updated"
+            subtitle: {
+                const st = root.u.stages.find(st => st.state === "active" || st.state === "failed");
+                return st ? st.label : "";
+            }
+            trailing: StyledText {
+                text: `${Math.round(root.u.progress * 100)}%`
                 color: Theme.m3onSurfaceVariant
-                wrapMode: Text.WrapAnywhere
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.bottomMargin: Theme.sp(4)
+                implicitHeight: 4
+                radius: 2
+                color: Theme.m3surfaceContainerHighest
+
+                Rectangle {
+                    height: parent.height
+                    width: parent.width * root.u.progress
+                    radius: 2
+                    color: root.u.stages.some(st => st.state === "failed") ? Theme.m3error : Theme.m3primary
+
+                    Behavior on width {
+                        Anim {
+                            type: Anim.DefaultEffects
+                        }
+                    }
+                }
+            }
+
+            Repeater {
+                model: root.u.stages
+
+                ColumnLayout {
+                    id: step
+
+                    required property var modelData
+                    readonly property bool hasLog: modelData.log.trim() !== ""
+                    property bool open: false
+                    readonly property bool shown: hasLog && (open || modelData.state === "failed")
+
+                    Layout.fillWidth: true
+                    spacing: Theme.sp(4)
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Theme.sp(12)
+
+                        MaterialIcon {
+                            id: stateIcon
+
+                            size: 20
+                            text: step.modelData.state === "done" ? "check_circle" : step.modelData.state === "active" ? "progress_activity" : step.modelData.state === "failed" ? "error" : "radio_button_unchecked"
+                            fill: step.modelData.state === "done" || step.modelData.state === "failed"
+                            color: step.modelData.state === "failed" ? Theme.m3error : step.modelData.state === "pending" ? Theme.m3outlineVariant : Theme.m3primary
+
+                            RotationAnimation on rotation {
+                                running: step.modelData.state === "active"
+                                from: 0
+                                to: 360
+                                duration: 1000
+                                loops: Animation.Infinite
+                                onStopped: stateIcon.rotation = 0
+                            }
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: step.modelData.label
+                            color: step.modelData.state === "pending" ? Theme.m3onSurfaceVariant : Theme.m3onSurface
+                            wrapMode: Text.Wrap
+                        }
+
+                        // Open or close the step's output.
+                        Item {
+                            implicitWidth: Theme.sp(32)
+                            implicitHeight: Theme.sp(32)
+                            opacity: step.hasLog ? 1 : 0
+                            enabled: step.hasLog
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: width / 2
+                                color: "transparent"
+
+                                StateLayer {
+                                    onClicked: step.open = !step.shown
+                                }
+                            }
+
+                            MaterialIcon {
+                                anchors.centerIn: parent
+                                size: 20
+                                text: "expand_more"
+                                color: Theme.m3onSurfaceVariant
+                                rotation: step.shown ? 180 : 0
+
+                                Behavior on rotation {
+                                    Anim {
+                                        type: Anim.FastSpatial
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // The step's output, as the service printed it.
+                    StyledText {
+                        visible: step.shown
+                        Layout.fillWidth: true
+                        Layout.leftMargin: Theme.sp(32)
+                        text: step.modelData.log.trim().split("\n").slice(-12).join("\n")
+                        font.family: "monospace"
+                        font.pixelSize: Theme.size.labelMedium
+                        color: Theme.m3onSurfaceVariant
+                        wrapMode: Text.WrapAnywhere
+                    }
+                }
             }
         }
     }

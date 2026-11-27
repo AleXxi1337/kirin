@@ -51,6 +51,7 @@ in
 {
   imports = [
     ./boot.nix
+    ./battery.nix
     ./sleep.nix
     ./hibernation.nix
     (import ./update.nix { inherit self; })

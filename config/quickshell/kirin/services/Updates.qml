@@ -58,7 +58,31 @@ Singleton {
     property string notifiedRev: ""
 
     property bool updating: false
-    property string log: ""
+    // The update's steps, in order: { id, label, state: "pending" |
+    // "active" | "done" | "failed", log }. The system's follow its
+    // service's "==> " lines (nix/update.nix); each keeps its own output.
+    property var stages: []
+    // How far along, 0..1: the steps weighted by how long they take.
+    readonly property real progress: {
+        let total = 0, done = 0;
+        for (const st of stages) {
+            const w = stageWeights[st.id] ?? 1;
+            total += w;
+            if (st.state === "done")
+                done += w;
+            else if (st.state === "active")
+                done += w / 2;
+        }
+        return total > 0 ? done / total : 0;
+    }
+    readonly property var stageWeights: ({
+            flake: 1,
+            build: 6,
+            switch: 2,
+            cleanup: 2,
+            shell: 1,
+            restart: 1
+        })
     property string error: ""
     // Hyprland (or its plugin) changed under the session: log out to finish.
     property bool needsRelogin: false
@@ -235,8 +259,20 @@ Singleton {
             return;
         updating = true;
         error = "";
-        log = "";
-        if (managed && systemBehind) {
+        const system = managed && systemBehind;
+        const list = [];
+        if (system) {
+            list.push({ id: "flake", label: "Updating kirin in the system's flake" });
+            list.push({ id: "build", label: "Building the system" });
+            list.push({ id: "switch", label: "Switching to the new system" });
+            if (Config.update.cleanup)
+                list.push({ id: "cleanup", label: "Cleaning up old systems" });
+        }
+        list.push({ id: "shell", label: `Updating the shell (${dir.replace(Quickshell.env("HOME"), "~")})` });
+        list.push({ id: "restart", label: "Restarting the shell" });
+        stages = list.map(st => Object.assign(st, { state: "pending", log: "" }));
+        if (system) {
+            setStage("flake", "active");
             stamps.running = true;
             journal.running = true;
             systemUpdate.running = true;
@@ -244,6 +280,46 @@ Singleton {
             moveCheckout(remote);
         }
     }
+
+    // A step's state; making one active finishes the ones before it.
+    function setStage(id: string, state: string): void {
+        const i = stages.findIndex(st => st.id === id);
+        if (i < 0)
+            return;
+        stages = stages.map((st, j) => {
+            const copy = Object.assign({}, st);
+            if (j === i)
+                copy.state = state;
+            else if (j < i && state === "active" && st.state !== "failed")
+                copy.state = "done";
+            return copy;
+        });
+    }
+
+    function stageLog(id: string, line: string): void {
+        stages = stages.map(st => {
+            if (st.id !== id)
+                return st;
+            const lines = (st.log + line + "\n").split("\n");
+            return Object.assign({}, st, { log: lines.slice(-200).join("\n") });
+        });
+    }
+
+    // The active step (where output goes), or the first.
+    function activeStage(): string {
+        const st = stages.find(st => st.state === "active");
+        return st ? st.id : (stages[0]?.id ?? "");
+    }
+
+    // The step that went wrong, and the update stops there.
+    function failStage(message: string): void {
+        setStage(activeStage(), "failed");
+        updating = false;
+        error = message;
+    }
+
+    // The service's "==> " lines: which step it's at.
+    readonly property var markers: [["==> Updating kirin", "flake"], ["==> Building", "build"], ["==> Switching", "switch"], ["==> Keeping the last", "cleanup"]]
 
     Process {
         id: stamps
@@ -270,10 +346,10 @@ Singleton {
         onExited: code => {
             journal.running = false;
             if (code !== 0) {
-                root.updating = false;
-                root.error = systemErr.text.trim() || "The system update failed: see the log (journalctl -u kirin-update).";
+                root.failStage(systemErr.text.trim() || "The system update failed: see the log (journalctl -u kirin-update).");
                 return;
             }
+            root.setStage("shell", "active");
             afterSystem.running = true;
         }
     }
@@ -285,8 +361,10 @@ Singleton {
         command: ["journalctl", "-fu", "kirin-update.service", "-n", "0", "-o", "cat"]
         stdout: SplitParser {
             onRead: line => {
-                const lines = (root.log + line + "\n").split("\n");
-                root.log = lines.slice(-200).join("\n");
+                const marker = root.markers.find(m => line.startsWith(m[0]));
+                if (marker)
+                    root.setStage(marker[1], "active");
+                root.stageLog(root.activeStage(), line);
             }
         }
     }
@@ -311,6 +389,7 @@ Singleton {
     }
 
     function moveCheckout(rev: string): void {
+        setStage("shell", "active");
         mover.target = rev;
         mover.running = true;
     }
@@ -326,13 +405,19 @@ Singleton {
             id: moverErr
         }
         onExited: code => {
+            const message = moverErr.text.trim();
+            if (message)
+                root.stageLog("shell", message);
+            if (code !== 0) {
+                root.failStage(message || "Couldn't update ~/.kirin.");
+                root.check();
+                return;
+            }
             root.updating = false;
-            if (code !== 0)
-                root.error = moverErr.text.trim() || "Couldn't update ~/.kirin.";
+            root.setStage("restart", "active");
             root.check();
             // The new shell (Hyprland picks its config up by itself).
-            if (code === 0)
-                restartTimer.start();
+            restartTimer.start();
         }
     }
 
