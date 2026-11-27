@@ -8,7 +8,7 @@ import qs.services
 
 // Updating kirin (services/Updates.qml): the versions, what's new, the
 // update itself; on NixOS with kirin's module also the system's settings
-// (auto update, committing flake.lock, cleaning up old systems), hidden
+// (one-click system update, cleaning up old systems), hidden
 // elsewhere.
 ColumnLayout {
     id: root
@@ -126,12 +126,13 @@ ColumnLayout {
             title: `${root.u.commits.length - 15} more`
         }
 
-        // NixOS, auto update off: the commands.
+        // NixOS, one-click update off: the commands (flake.lock updated
+        // without sudo when it's the user's, so it stays theirs).
         SettingsRow {
             visible: root.u.managed && !root.u.autoUpdate && root.u.systemBehind
             icon: "terminal"
             title: "Update the system"
-            subtitle: "With Flake auto update off, in a terminal:"
+            subtitle: "With One-click system update off, in a terminal:"
 
             Rectangle {
                 Layout.fillWidth: true
@@ -144,7 +145,7 @@ ColumnLayout {
 
                     anchors.fill: parent
                     anchors.margins: Theme.sp(12)
-                    text: `sudo nix flake update kirin --flake ${root.flake}\nsudo nixos-rebuild switch --flake ${root.flake}#${root.host}\ngit -C ${root.u.dir} merge --ff-only $(jq -r .rev /etc/kirin/system.json)`
+                    text: `${root.u.flakeWritable ? "" : "sudo "}nix flake update kirin --flake ${root.flake}\nsudo nixos-rebuild switch --flake ${root.flake}#${root.host}\ngit -C ${root.u.dir} merge --ff-only $(jq -r .rev /etc/kirin/system.json)`
                     font.family: "monospace"
                     wrapMode: Text.WrapAnywhere
                 }
@@ -195,22 +196,11 @@ ColumnLayout {
 
         SettingsRow {
             icon: "autorenew"
-            title: "Flake auto update"
-            subtitle: "The Update button updates the system's flake and rebuilds it too, without a password or commands (your password once, to switch this). It builds whatever the repository holds, as root."
+            title: "One-click system update"
+            subtitle: "Update also updates kirin in the system's flake and rebuilds the system: no terminal, no password (asked once, to turn this on). It builds whatever the repository holds, as root."
             trailing: ToggleSwitch {
                 checked: root.u.autoUpdate
                 onToggled: checked => root.u.setAutoUpdate(checked)
-            }
-        }
-
-        SettingsRow {
-            visible: root.u.flakeInGit
-            icon: "commit"
-            title: "Commit flake.lock after updating"
-            subtitle: `${root.flake} is a git repository: the updated flake.lock is committed there (only it, not pushed).`
-            trailing: ToggleSwitch {
-                checked: Config.update.autoCommit
-                onToggled: checked => Config.update.autoCommit = checked
             }
         }
 

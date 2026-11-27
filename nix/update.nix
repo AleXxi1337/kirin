@@ -1,18 +1,17 @@
 # Updating kirin on NixOS, for Settings → Update (services/Updates.qml).
 #
 #   kirin-update.service   updates the kirin input of the system's flake
-#                          (committing flake.lock as its owner, if asked and
-#                          the flake is a git repository), rebuilds and
+#                          (as its owner, when it's a user's), rebuilds and
 #                          switches to the system, then cleans up old ones
 #                          (if asked). Sleep is held off meanwhile.
 #   kirin-cleanup.service  keeps the last N systems (the boot menu's), and
 #                          collects the garbage in the store.
 #
-# With "Flake auto update" on (Settings → Update; /var/lib/kirin/auto-update,
+# With "One-click system update" on (Settings → Update; /var/lib/kirin/auto-update,
 # set through `pkexec kirin-auto-update on|off`, so a password once), the
 # user may start them without a password (polkit): the Update button does,
 # nothing starts them on its own. Off, kirin shows the commands instead.
-# Their settings (auto commit, cleanup, how many systems to keep) are the
+# Their settings (cleanup, how many systems to keep) are the
 # user's, in ~/.config/kirin/config.json (update.*): a flag and a number,
 # checked here.
 #
@@ -35,7 +34,6 @@ let
     conf="$home/.config/kirin/config.json"
     read_setting() { jq -r "$1" "$conf" 2>/dev/null || true; }
     # (jq's // takes false for missing: compared instead.)
-    autocommit=$(read_setting '.update.autoCommit == true')
     cleanup=$(read_setting '.update.cleanup != false')
     keep=$(read_setting '.update.keep // 5')
     case "$keep" in "" | *[!0-9]*) keep=5 ;; esac
@@ -65,12 +63,9 @@ let
 
     echo "==> Updating kirin in $flake"
     if [ -d "$flake/.git" ] && [ "$owner" != root ]; then
-      # The owner's repository: updated (and committed) as them.
+      # The owner's repository: updated as them (flake.lock stays theirs;
+      # committing it is theirs too).
       as_owner nix flake update kirin --flake "$flake"
-      if [ "$autocommit" = true ]; then
-        rev=$(jq -r '.nodes.kirin.locked.rev // "?"' "$flake/flake.lock" | cut -c1-7)
-        as_owner git -C "$flake" commit -m "kirin: update to $rev" -- flake.lock || echo "(nothing to commit)"
-      fi
 
       # Built as them too: git won't open a repository root doesn't own
       # ("not owned by current user"; sudo passes SUDO_UID, a service

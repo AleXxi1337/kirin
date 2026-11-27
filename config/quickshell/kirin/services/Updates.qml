@@ -18,9 +18,9 @@ import Quickshell.Io
 // Updating on NixOS: the system first (kirin-update.service: the flake's
 // kirin input, a rebuild, the cleanup), then the checkout moves to the
 // very commit the system was built from, so the two never differ. With
-// "Flake auto update" on (a flag only root sets: `pkexec kirin-auto-update`)
-// that runs without a password, on its own once a day; off, the page shows
-// the commands. Elsewhere: the checkout moves to the branch's latest.
+// "One-click system update" on (a flag only root sets: `pkexec
+// kirin-auto-update`) the Update button runs that without a password; off,
+// the page shows the commands. Nothing updates on its own. Elsewhere: the checkout moves to the branch's latest.
 // Never with changes in the checkout: files changed (stash them) or commits
 // of its own (for git, by hand).
 Singleton {
@@ -33,8 +33,9 @@ Singleton {
     property var system: null
     readonly property bool managed: system !== null
     property bool autoUpdate: false
-    // The system's flake is a git repository (auto commit applies).
-    property bool flakeInGit: false
+    // The system's flake can be changed without sudo (the user's own, like
+    // ~/nixos-config): `nix flake update` as them, so flake.lock stays theirs.
+    property bool flakeWritable: false
 
     // The checkout.
     property bool present: false
@@ -91,7 +92,7 @@ Singleton {
         onLoaded: {
             try {
                 root.system = JSON.parse(text());
-                flakeGit.running = true;
+                flakeAccess.running = true;
             } catch (e) {
                 root.system = null;
             }
@@ -107,10 +108,10 @@ Singleton {
     }
 
     Process {
-        id: flakeGit
+        id: flakeAccess
 
-        command: ["test", "-d", `${root.system?.flake ?? "/nonexistent"}/.git`]
-        onExited: code => root.flakeInGit = code === 0
+        command: ["test", "-w", `${root.system?.flake ?? "/nonexistent"}/flake.lock`]
+        onExited: code => root.flakeWritable = code === 0
     }
 
     Process {

@@ -252,8 +252,6 @@ Singleton {
             // Settings → Update (services/Updates.qml; on NixOS also read, as
             // root, by kirin-update.service: nix/update.nix).
             property JsonObject update: JsonObject {
-                // Commit flake.lock after updating (the system's flake in git).
-                property bool autoCommit: false
                 // Keep only the last `keep` systems after updating.
                 property bool cleanup: true
                 property int keep: 5
