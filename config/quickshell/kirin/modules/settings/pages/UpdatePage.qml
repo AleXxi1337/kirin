@@ -196,7 +196,7 @@ ColumnLayout {
         SettingsRow {
             icon: "autorenew"
             title: "Flake auto update"
-            subtitle: "Update kirin and the system on their own, once a day, without asking (your password once, to switch this). It builds whatever the repository holds, as root."
+            subtitle: "The Update button updates the system's flake and rebuilds it too, without a password or commands (your password once, to switch this). It builds whatever the repository holds, as root."
             trailing: ToggleSwitch {
                 checked: root.u.autoUpdate
                 onToggled: checked => root.u.setAutoUpdate(checked)

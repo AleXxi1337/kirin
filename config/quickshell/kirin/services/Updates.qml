@@ -212,15 +212,11 @@ Singleton {
         systemChanges = managed && (systemUnknown || files.some(f => /^(nix|plugins|cli|install)\//.test(f) || f === "flake.nix" || f === "flake.lock"));
     }
 
-    // Once a check is done: on its own (auto update), or a notification for
-    // a new version (once each).
+    // Once a check is done: a notification for a new version (once each).
+    // Updating is always the user's: the Update button.
     function afterCheck(): void {
         if (!available || remote === notifiedRev)
             return;
-        if (managed && autoUpdate && clean) {
-            update();
-            return;
-        }
         notifiedRev = remote;
         saveState();
         Quickshell.execDetached(["notify-send", "-a", "Kirin", "-i", "system-software-update", "Update available", clean ? `${commits.length || "New"} changes to kirin. Settings → Update.` : "kirin has an update, but ~/.kirin has changes of yours. Settings → Update."]);

@@ -336,8 +336,9 @@ All of them can be changed in Settings → Shortcuts.
 Settings → Update shows your version, the latest one and what's new; it
 checks once a day too, with a notification and a dot on the bar's gear.
 
-- **Flake auto update** on (it asks for your password once): kirin updates
-  itself and the system daily, or when you press Update.
+- **Flake auto update** on (it asks for your password once): Update does
+  it all, `nix flake update kirin` and the rebuild too, without a password.
+  Nothing updates on its own: the daily check only tells you.
 - Off: the page shows the commands. By hand:
 
   ```sh

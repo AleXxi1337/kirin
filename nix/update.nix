@@ -10,8 +10,8 @@
 #
 # With "Flake auto update" on (Settings → Update; /var/lib/kirin/auto-update,
 # set through `pkexec kirin-auto-update on|off`, so a password once), the
-# user may start them without a password (polkit), and kirin does daily.
-# Off, kirin shows the commands instead.
+# user may start them without a password (polkit): the Update button does,
+# nothing starts them on its own. Off, kirin shows the commands instead.
 # Their settings (auto commit, cleanup, how many systems to keep) are the
 # user's, in ~/.config/kirin/config.json (update.*): a flag and a number,
 # checked here.
@@ -71,12 +71,21 @@ let
         rev=$(jq -r '.nodes.kirin.locked.rev // "?"' "$flake/flake.lock" | cut -c1-7)
         as_owner git -C "$flake" commit -m "kirin: update to $rev" -- flake.lock || echo "(nothing to commit)"
       fi
+
+      # Built as them too: git won't open a repository root doesn't own
+      # ("not owned by current user"; sudo passes SUDO_UID, a service
+      # can't). Then made the system and switched to as root, as
+      # nixos-rebuild switch does.
+      echo "==> Building the system ($flake#$host)"
+      system=$(as_owner nix build --no-link --print-out-paths "$flake#nixosConfigurations.\"$host\".config.system.build.toplevel")
+      echo "==> Switching to $system"
+      nix-env --profile /nix/var/nix/profiles/system --set "$system"
+      "$system/bin/switch-to-configuration" switch
     else
       nix flake update kirin --flake "$flake"
+      echo "==> Building the system ($flake#$host)"
+      nixos-rebuild switch --flake "$flake#$host"
     fi
-
-    echo "==> Building the system ($flake#$host)"
-    nixos-rebuild switch --flake "$flake#$host"
 
     if [ "$cleanup" = true ]; then
       ${cleanupScript}
