@@ -277,7 +277,9 @@ Singleton {
 
         property bool tried: false
 
-        command: ["systemctl", "start", "kirin-charge-limit.service"]
+        // Only where the module installed it, and never asking for a
+        // password (its polkit rule lets the user start it).
+        command: ["sh", "-c", "[ -e /etc/systemd/system/kirin-charge-limit.service ] && exec systemctl --no-ask-password start kirin-charge-limit.service"]
         onExited: code => {
             if (code === 0)
                 root.limitError = "";

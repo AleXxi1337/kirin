@@ -69,11 +69,13 @@ let
 
       # Built as them too: git won't open a repository root doesn't own
       # ("not owned by current user"; sudo passes SUDO_UID, a service
-      # can't). Then switched to by nixos-rebuild as root, as always.
+      # can't). Then switched to by nixos-rebuild as root, as always
+      # (--no-reexec: without --flake it would build itself from
+      # <nixpkgs/nixos>, which a flake system has no NIX_PATH for).
       echo "==> Building the system ($flake#$host)"
       system=$(as_owner nix build --no-link --print-out-paths "$flake#nixosConfigurations.\"$host\".config.system.build.toplevel")
       echo "==> Switching to $system"
-      nixos-rebuild switch --store-path "$system"
+      nixos-rebuild switch --store-path "$system" --no-reexec
     else
       nix flake update kirin --flake "$flake"
       echo "==> Building the system ($flake#$host)"
