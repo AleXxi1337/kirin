@@ -44,12 +44,21 @@ nixos = [
 ]
 
 [fonts]
+# Text: Roboto (sans-serif), Noto Serif (serif, in noto-fonts),
+# JetBrains Mono (monospace); every other script from Noto, CJK too;
+# Liberation stands in for Arial, Times New Roman, Courier New and
+# Helvetica at the same metrics (documents keep their layout). Icons:
+# Material Symbols (on Arch, from the AUR). Which is which, and the
+# fallbacks: the NixOS module's defaultFonts and install/fontconfig/.
 nixos = [
   "roboto",
-  "material-symbols",
   "noto-fonts",
+  "noto-fonts-cjk-sans",
+  "noto-fonts-cjk-serif",
   "noto-fonts-color-emoji",
   "nerd-fonts.jetbrains-mono",
+  "liberation_ttf",
+  "material-symbols",
 ]
 
 # Links from the checkout (~/.kirin) into the home directory.

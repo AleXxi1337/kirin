@@ -225,13 +225,15 @@ end)
 hl.on("workspace.active", function()
 	if kirin_window_mode ~= "windows" then return end
 	for _, m in ipairs(hl.get_monitors()) do
+		-- No id for a moment while the config reloads (switching modes).
 		local ws = hl.get_active_workspace(m.name)
+		local id = ws and ws.id
 		local home = desktops[m.name]
-		if ws and home and ws.id > 0 and ws.id ~= home then
+		if id and id > 0 and home and id ~= home then
 			hl.dispatch(hl.dsp.focus({ monitor = m.name }))
 			hl.dispatch(hl.dsp.focus({ workspace = home }))
-		elseif ws and not home and ws.id > 0 then
-			desktops[m.name] = ws.id
+		elseif id and id > 0 and not home then
+			desktops[m.name] = id
 		end
 	end
 end)

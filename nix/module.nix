@@ -50,6 +50,7 @@ let
 in
 {
   imports = [
+    ./boot.nix
     ./sleep.nix
     ./hibernation.nix
     (import ./update.nix { inherit self; })
@@ -68,6 +69,11 @@ in
       default = ".kirin";
       description = "The checkout of kirin, relative to the home directory.";
     };
+
+    fonts.microsoft = lib.mkEnableOption ''
+      Microsoft's core fonts (Arial, Times New Roman, Courier New, Verdana…;
+      unfree: needs nixpkgs.config.allowUnfree). Without them, Liberation
+      stands in at the same metrics'';
 
     repo = lib.mkOption {
       type = lib.types.str;
@@ -103,12 +109,44 @@ in
     # App symbols for the bar (share/kirin/symbols).
     environment.pathsToLink = [ "/share/kirin" ];
 
-    fonts.packages = map attr manifest.fonts.nixos;
+    # Fonts: the manifest's, not NixOS's defaults (DejaVu, FreeFont, TeX
+    # Gyre, Unifont came before Noto in the fallbacks: Hebrew, Arabic and
+    # Thai in other styles, emoji in black and white).
+    # Above NixOS's own default (graphical-desktop.nix), below a config's.
+    fonts.enableDefaultPackages = lib.mkOverride 900 false;
+    fonts.packages = map attr manifest.fonts.nixos ++ lib.optional cfg.fonts.microsoft pkgs.corefonts;
+    # Each with its fallbacks: other scripts from Noto (Hebrew and Arabic
+    # named, else DejaVu Sans, which fontconfig always loads, and the
+    # Microsoft fonts come first), CJK in its Japanese forms, emoji last
+    # (else digits and # would be emoji).
     fonts.fontconfig.defaultFonts = {
-      sansSerif = lib.mkDefault [ "Roboto" ];
-      monospace = lib.mkDefault [ "JetBrainsMono Nerd Font" ];
+      sansSerif = lib.mkDefault [
+        "Roboto"
+        "Noto Sans"
+        "Noto Sans Hebrew"
+        "Noto Sans Arabic"
+        "Noto Sans CJK JP"
+        "Noto Color Emoji"
+      ];
+      serif = lib.mkDefault [
+        "Noto Serif"
+        "Noto Serif Hebrew"
+        "Noto Naskh Arabic"
+        "Noto Serif CJK JP"
+        "Noto Color Emoji"
+      ];
+      monospace = lib.mkDefault [
+        "JetBrainsMono Nerd Font"
+        "Noto Sans Mono"
+        "Noto Sans Hebrew"
+        "Noto Sans Arabic"
+        "Noto Sans Mono CJK JP"
+        "Noto Color Emoji"
+      ];
       emoji = lib.mkDefault [ "Noto Color Emoji" ];
     };
+    # system-ui, ui-monospace, -apple-system, Segoe UI… as the above.
+    fonts.fontconfig.localConf = lib.mkDefault (builtins.readFile ../install/fontconfig/kirin-aliases.conf);
 
     # The login: greetd starts the session at once; kirin shows its lock
     # screen, which checks the password through this PAM service.

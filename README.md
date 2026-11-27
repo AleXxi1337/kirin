@@ -282,6 +282,10 @@ Every option of kirin's, and how to override what it turns on.
     # Sleep, then hibernate once the battery runs low. Needs
     # hibernation. Default: off.
     sleep.thenHibernate = true;
+
+    # A quiet boot: no boot menu (hold Space to see it), no kernel text,
+    # a splash screen that also asks for the disk's password. Default: on.
+    boot.splash = true;
   };
 
   # What kirin turns on are defaults: yours win. For instance tuned instead
@@ -299,7 +303,8 @@ Every option of kirin's, and how to override what it turns on.
 
 What kirin turns on, all overridable: Hyprland, PipeWire, NetworkManager,
 Bluetooth, UPower, power-profiles-daemon, udisks2, gvfs, polkit, XDG
-portals, fonts, greetd (starting kirin's session) and the packages
+portals, fonts, a quiet boot with a splash screen (Plymouth), greetd
+(starting kirin's session) and the packages
 `install/manifest.toml` lists.
 
 ## After installing

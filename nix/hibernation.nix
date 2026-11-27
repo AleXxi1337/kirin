@@ -26,6 +26,9 @@ in
   options.kirin.hibernation.enable = lib.mkEnableOption "hibernation into a swapfile sized to this machine's RAM";
 
   config = lib.mkIf cfg.enable {
+    # Resuming needs it: it reads where the image is (HibernateLocation).
+    boot.initrd.systemd.enable = lib.mkDefault true;
+
     systemd.services.swapfile = {
       description = "Swapfile for hibernation, sized to the RAM";
       # An ordinary service, started with the rest once the filesystems are
