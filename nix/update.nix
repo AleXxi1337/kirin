@@ -69,13 +69,11 @@ let
 
       # Built as them too: git won't open a repository root doesn't own
       # ("not owned by current user"; sudo passes SUDO_UID, a service
-      # can't). Then made the system and switched to as root, as
-      # nixos-rebuild switch does.
+      # can't). Then switched to by nixos-rebuild as root, as always.
       echo "==> Building the system ($flake#$host)"
       system=$(as_owner nix build --no-link --print-out-paths "$flake#nixosConfigurations.\"$host\".config.system.build.toplevel")
       echo "==> Switching to $system"
-      nix-env --profile /nix/var/nix/profiles/system --set "$system"
-      "$system/bin/switch-to-configuration" switch
+      nixos-rebuild switch --store-path "$system"
     else
       nix flake update kirin --flake "$flake"
       echo "==> Building the system ($flake#$host)"
@@ -105,8 +103,9 @@ let
     inherit path;
     environment.HOME = "/root";
     serviceConfig.Type = "oneshot";
-    # Not stopped by the switch it runs: a new kirin changes this unit,
-    # and switch-to-configuration stopped it (and itself, in it) halfway.
+    # As NixOS's own nixos-upgrade.service: a switch leaves it alone (a
+    # new kirin changes this unit). nixos-rebuild runs the switch itself
+    # apart from it (systemd-run).
     restartIfChanged = false;
     script = ''
       exec systemd-inhibit --what=sleep:shutdown --who=kirin --why=${lib.escapeShellArg name} \
