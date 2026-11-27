@@ -105,6 +105,9 @@ let
     inherit path;
     environment.HOME = "/root";
     serviceConfig.Type = "oneshot";
+    # Not stopped by the switch it runs: a new kirin changes this unit,
+    # and switch-to-configuration stopped it (and itself, in it) halfway.
+    restartIfChanged = false;
     script = ''
       exec systemd-inhibit --what=sleep:shutdown --who=kirin --why=${lib.escapeShellArg name} \
         bash -c ${lib.escapeShellArg script}
